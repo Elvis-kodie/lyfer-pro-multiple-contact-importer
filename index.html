@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyfer Pro Contact Importer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 200px;
+        }
+        .btn-primary {
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            background-color: #2563eb;
+        }
+        .output {
+            transition: opacity 0.3s;
+        }
+        .example-box {
+            background: #f9fafb;
+            border-left: 4px solid #3b82f6;
+        }
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+        }
+        .chatbot-header {
+            background: #3b82f6;
+            color: white;
+            padding: 10px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chatbot-body {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .chatbot-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        .chatbot-input input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .chatbot-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #3b82f6;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .chatbot-toggle:hover {
+            background: #2563eb;
+        }
+        .chat-message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .user-message {
+            background: #e5e7eb;
+            margin-left: 10%;
+        }
+        .bot-message {
+            background: #3b82f6;
+            color: white;
+            margin-right: 10%;
+        }
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+        }
+        .custom-select-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 300px;
+        }
+        .custom-select {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            width: 100%;
+            background: white;
+            cursor: pointer;
+        }
+        .custom-select option {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .flag-display {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        .flag-img {
+            width: 24px;
+            height: 16px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="container mx-auto">
+        <div class="header text-center mb-8 flex items-center justify-center">
+            <img src="https://via.placeholder.com/150x50?text=Your+Logo" alt="Your Logo" class="h-12 mr-4">
+            <div>
+                <h1 class="text-3xl font-bold">Lyfer Pro Contact Importer</h1>
+                <p class="mt-2 text-lg">Effortlessly import up to 1000 contacts to your iPhone or Android with a single click.</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">How It Works</h2>
+            <p class="text-gray-600 mb-4">Paste up to 100 contacts at a time in the format below (repeat for up to 1000 total). Each contact requires a name and phone number on separate lines. Select a country to add its code (e.g., in Ghana, 0241234567 becomes +233241234567). Invalid formats will be auto-corrected.</p>
+            <div class="mb-4 flex items-center">
+                <label for="countrySelect" class="block text-gray-600 font-semibold mr-2">Select Country for Phone Numbers:</label>
+                <div class="custom-select-container">
+                    <select id="countrySelect" class="custom-select" onchange="updateFlag()">
+                        <option value="+233" data-flag="https://flagcdn.com/16x12/gh.png" data-code="gh">Ghana (+233)</option>
+                        <option value="+93" data-flag="https://flagcdn.com/16x12/af.png" data-code="af">Afghanistan (+93)</option>
+                        <option value="+355" data-flag="https://flagcdn.com/16x12/al.png" data-code="al">Albania (+355)</option>
+                        <option value="+213" data-flag="https://flagcdn.com/16x12/dz.png" data-code="dz">Algeria (+213)</option>
+                        <option value="+376" data-flag="https://flagcdn.com/16x12/ad.png" data-code="ad">Andorra (+376)</option>
+                        <option value="+244" data-flag="https://flagcdn.com/16x12/ao.png" data-code="ao">Angola (+244)</option>
+                        <option value="+1-268" data-flag="https://flagcdn.com/16x12/ag.png" data-code="ag">Antigua and Barbuda (+1-268)</option>
+                        <option value="+54" data-flag="https://flagcdn.com/16x12/ar.png" data-code="ar">Argentina (+54)</option>
+                        <option value="+374" data-flag="https://flagcdn.com/16x12/am.png" data-code="am">Armenia (+374)</option>
+                        <option value="+297" data-flag="https://flagcdn.com/16x12/aw.png" data-code="aw">Aruba (+297)</option>
+                        <option value="+61" data-flag="https://flagcdn.com/16x12/au.png" data-code="au">Australia (+61)</option>
+                        <option value="+43" data-flag="https://flagcdn.com/16x12/at.png" data-code="at">Austria (+43)</option>
+                        <option value="+994" data-flag="https://flagcdn.com/16x12/az.png" data-code="az">Azerbaijan (+994)</option>
+                        <option value="+1-242" data-flag="https://flagcdn.com/16x12/bs.png" data-code="bs">Bahamas (+1-242)</option>
+                        <option value="+973" data-flag="https://flagcdn.com/16x12/bh.png" data-code="bh">Bahrain (+973)</option>
+                        <option value="+880" data-flag="https://flagcdn.com/16x12/bd.png" data-code="bd">Bangladesh (+880)</option>
+                        <option value="+1-246" data-flag="https://flagcdn.com/16x12/bb.png" data-code="bb">Barbados (+1-246)</option>
+                        <option value="+375" data-flag="https://flagcdn.com/16x12/by.png" data-code="by">Belarus (+375)</option>
+                        <option value="+32" data-flag="https://flagcdn.com/16x12/be.png" data-code="be">Belgium (+32)</option>
+                        <option value="+501" data-flag="https://flagcdn.com/16x12/bz.png" data-code="bz">Belize (+501)</option>
+                        <option value="+229" data-flag="https://flagcdn.com/16x12/bj.png" data-code="bj">Benin (+229)</option>
+                        <option value="+975" data-flag="https://flagcdn.com/16x12/bt.png" data-code="bt">Bhutan (+975)</option>
+                        <option value="+591" data-flag="https://flagcdn.com/16x12/bo.png" data-code="bo">Bolivia (+591)</option>
+                        <option value="+387" data-flag="https://flagcdn.com/16x12/ba.png" data-code="ba">Bosnia and Herzegovina (+387)</option>
+                        <option value="+267" data-flag="https://flagcdn.com/16x12/bw.png" data-code="bw">Botswana (+267)</option>
+                        <option value="+55" data-flag="https://flagcdn.com/16x12/br.png" data-code="br">Brazil (+55)</option>
+                        <option value="+673" data-flag="https://flagcdn.com/16x12/bn.png" data-code="bn">Brunei (+673)</option>
+                        <option value="+359" data-flag="https://flagcdn.com/16x12/bg.png" data-code="bg">Bulgaria (+359)</option>
+                        <option value="+226" data-flag="https://flagcdn.com/16x12/bf.png" data-code="bf">Burkina Faso (+226)</option>
+                        <option value="+257" data-flag="https://flagcdn.com/16x12/bi.png" data-code="bi">Burundi (+257)</option>
+                        <option value="+855" data-flag="https://flagcdn.com/16x12/kh.png" data-code="kh">Cambodia (+855)</option>
+                        <option value="+237" data-flag="https://flagcdn.com/16x12/cm.png" data-code="cm">Cameroon (+237)</option>
+                        <option value="+1" data-flag="https://flagcdn.com/16x12/ca.png" data-code="ca">Canada (+1)</option>
+                        <option value="+238" data-flag="https://flagcdn.com/16x12/cv.png" data-code="cv">Cape Verde (+238)</option>
+                        <option value="+236" data-flag="https://flagcdn.com/16x12/cf.png" data-code="cf">Central African Republic (+236)</option>
+                        <option value="+235" data-flag="https://flagcdn.com/16x12/td.png" data-code="td">Chad (+235)</option>
+                        <option value="+56" data-flag="https://flagcdn.com/16x12/cl.png" data-code="cl">Chile (+56)</option>
+                        <option value="+86" data-flag="https://flagcdn.com/16x12/cn.png" data-code="cn">China (+86)</option>
+                        <option value="+57" data-flag="https://flagcdn.com/16x12/co.png" data-code="co">Colombia (+57)</option>
+                        <option value="+269" data-flag="https://flagcdn.com/16x12/km.png" data-code="km">Comoros (+269)</option>
+                        <option value="+242" data-flag="https://flagcdn.com/16x12/cg.png" data-code="cg">Congo (+242)</option>
+                        <option value="+243" data-flag="https://flagcdn.com/16x12/cd.png" data-code="cd">Congo, Democratic Republic of the (+243)</option>
+                        <option value="+682" data-flag="https://flagcdn.com/16x12/ck.png" data-code="ck">Cook Islands (+682)</option>
+                        <option value="+506" data-flag="https://flagcdn.com/16x12/cr.png" data-code="cr">Costa Rica (+506)</option>
+                        <option value="+385" data-flag="https://flagcdn.com/16x12/hr.png" data-code="hr">Croatia (+385)</option>
+                        <option value="+53" data-flag="https://flagcdn.com/16x12/cu.png" data-code="cu">Cuba (+53)</option>
+                        <option value="+357" data-flag="https://flagcdn.com/16x12/cy.png" data-code="cy">Cyprus (+357)</option>
+                        <option value="+420" data-flag="https://flagcdn.com/16x12/cz.png" data-code="cz">Czech Republic (+420)</option>
+                        <option value="+45" data-flag="https://flagcdn.com/16x12/dk.png" data-code="dk">Denmark (+45)</option>
+                        <option value="+253" data-flag="https://flagcdn.com/16x12/dj.png" data-code="dj">Djibouti (+253)</option>
+                        <option value="+1-767" data-flag="https://flagcdn.com/16x12/dm.png" data-code="dm">Dominica (+1-767)</option>
+                        <option value="+1-809" data-flag="https://flagcdn.com/16x12/do.png" data-code="do">Dominican Republic (+1-809)</option>
+                        <option value="+670" data-flag="https://flagcdn.com/16x12/tl.png" data-code="tl">East Timor (+670)</option>
+                        <option value="+593" data-flag="https://flagcdn.com/16x12/ec.png" data-code="ec">Ecuador (+593)</option>
+                        <option value="+20" data-flag="https://flagcdn.com/16x12/eg.png" data-code="eg">Egypt (+20)</option>
+                        <option value="+503" data-flag="https://flagcdn.com/16x12/sv.png" data-code="sv">El Salvador (+503)</option>
+                        <option value="+240" data-flag="https://flagcdn.com/16x12/gq.png" data-code="gq">Equatorial Guinea (+240)</option>
+                        <option value="+291" data-flag="https://flagcdn.com/16x12/er.png" data-code="er">Eritrea (+291)</option>
+                        <option value="+372" data-flag="https://flagcdn.com/16x12/ee.png" data-code="ee">Estonia (+372)</option>
+                        <option value="+251" data-flag="https://flagcdn.com/16x12/et.png" data-code="et">Ethiopia (+251)</option>
+                        <option value="+500" data-flag="https://flagcdn.com/16x12/fk.png" data-code="fk">Falkland Islands (+500)</option>
+                        <option value="+298" data-flag="https://flagcdn.com/16x12/fo.png" data-code="fo">Faroe Islands (+298)</option>
+                        <option value="+679" data-flag="https://flagcdn.com/16x12/fj.png" data-code="fj">Fiji (+679)</option>
+                        <option value="+358" data-flag="https://flagcdn.com/16x12/fi.png" data-code="fi">Finland (+358)</option>
+                        <option value="+33" data-flag="https://flagcdn.com/16x12/fr.png" data-code="fr">France (+33)</option>
+                        <option value="+241" data-flag="https://flagcdn.com/16x12/ga.png" data-code="ga">Gabon (+241)</option>
+                        <option value="+220" data-flag="https://flagcdn.com/16x12/gm.png" data-code="gm">Gambia (+220)</option>
+                        <option value="+995" data-flag="https://flagcdn.com/16x12/ge.png" data-code="ge">Georgia (+995)</option>
+                        <option value="+49" data-flag="https://flagcdn.com/16x12/de.png" data-code="de">Germany (+49)</option>
+                        <option value="+350" data-flag="https://flagcdn.com/16x12/gi.png" data-code="gi">Gibraltar (+350)</option>
+                        <option value="+30" data-flag="https://flagcdn.com/16x12/gr.png" data-code="gr">Greece (+30)</option>
+                        <option value="+299" data-flag="https://flagcdn.com/16x12/gl.png" data-code="gl">Greenland (+299)</option>
+                        <option value="+1-473" data-flag="https://flagcdn.com/16x12/gd.png" data-code="gd">Grenada (+1-473)</option>
+                        <option value="+502" data-flag="https://flagcdn.com/16x12/gt.png" data-code="gt">Guatemala (+502)</option>
+                        <option value="+44-1481" data-flag="https://flagcdn.com/16x12/gg.png" data-code="gg">Guernsey (+44-1481)</option>
+                        <option value="+224" data-flag="https://flagcdn.com/16x12/gn.png" data-code="gn">Guinea (+224)</option>
+                        <option value="+245" data-flag="https://flagcdn.com/16x12/gw.png" data-code="gw">Guinea-Bissau (+245)</option>
+                        <option value="+592" data-flag="https://flagcdn.com/16x12/gy.png" data-code="gy">Guyana (+592)</option>
+                        <option value="+509" data-flag="https://flagcdn.com/16x12/ht.png" data-code="ht">Haiti (+509)</option>
+                        <option value="+504" data-flag="https://flagcdn.com/16x12/hn.png" data-code="hn">Honduras (+504)</option>
+                        <option value="+852" data-flag="https://flagcdn.com/16x12/hk.png" data-code="hk">Hong Kong (+852)</option>
+                        <option value="+36" data-flag="https://flagcdn.com/16x12/hu.png" data-code="hu">Hungary (+36)</option>
+                        <option value="+354" data-flag="https://flagcdn.com/16x12/is.png" data-code="is">Iceland (+354)</option>
+                        <option value="+91" data-flag="https://flagcdn.com/16x12/in.png" data-code="in">India (+91)</option>
+                        <option value="+62" data-flag="https://flagcdn.com/16x12/id.png" data-code="id">Indonesia (+62)</option>
+                        <option value="+98" data-flag="https://flagcdn.com/16x12/ir.png" data-code="ir">Iran (+98)</option>
+                        <option value="+964" data-flag="https://flagcdn.com/16x12/iq.png" data-code="iq">Iraq (+964)</option>
+                        <option value="+353" data-flag="https://flagcdn.com/16x12/ie.png" data-code="ie">Ireland (+353)</option>
+                        <option value="+44-1624" data-flag="https://flagcdn.com/16x12/im.png" data-code="im">Isle of Man (+44-1624)</option>
+                        <option value="+972" data-flag="https://flagcdn.com/16x12/il.png" data-code="il">Israel (+972)</option>
+                        <option value="+39" data-flag="https://flagcdn.com/16x12/it.png" data-code="it">Italy (+39)</option>
+                        <option value="+1-876" data-flag="https://flagcdn.com/16x12/jm.png" data-code="jm">Jamaica (+1-876)</option>
+                        <option value="+81" data-flag="https://flagcdn.com/16x12/jp.png" data-code="jp">Japan (+81)</option>
+                        <option value="+44-1534" data-flag="https://flagcdn.com/16x12/je.png" data-code="je">Jersey (+44-1534)</option>
+                        <option value="+962" data-flag="https://flagcdn.com/16x12/jo.png" data-code="jo">Jordan (+962)</option>
+                        <option value="+7" data-flag="https://flagcdn.com/16x12/kz.png" data-code="kz">Kazakhstan (+7)</option>
+                        <option value="+254" data-flag="https://flagcdn.com/16x12/ke.png" data-code="ke">Kenya (+254)</option>
+                        <option value="+686" data-flag="https://flagcdn.com/16x12/ki.png" data-code="ki">Kiribati (+686)</option>
+                        <option value="+383" data-flag="https://flagcdn.com/16x12/xk.png" data-code="xk">Kosovo (+383)</option>
+                        <option value="+965" data-flag="https://flagcdn.com/16x12/kw.png" data-code="kw">Kuwait (+965)</option>
+                        <option value="+996" data-flag="https://flagcdn.com/16x12/kg.png" data-code="kg">Kyrgyzstan (+996)</option>
+                        <option value="+856" data-flag="https://flagcdn.com/16x12/la.png" data-code="la">Laos (+856)</option>
+                        <option value="+371" data-flag="https://flagcdn.com/16x12/lv.png" data-code="lv">Latvia (+371)</option>
+                        <option value="+961" data-flag="https://flagcdn.com/16x12/lb.png" data-code="lb">Lebanon (+961)</option>
+                        <option value="+266" data-flag="https://flagcdn.com/16x12/ls.png" data-code="ls">Lesotho (+266)</option>
+                        <option value="+231" data-flag="https://flagcdn.com/16x12/lr.png" data-code="lr">Liberia (+231)</option>
+                        <option value="+218" data-flag="https://flagcdn.com/16x12/ly.png" data-code="ly">Libya (+218)</option>
+                        <option value="+423" data-flag="https://flagcdn.com/16x12/li.png" data-code="li">Liechtenstein (+423)</option>
+                        <option value="+370" data-flag="https://flagcdn.com/16x12/lt.png" data-code="lt">Lithuania (+370)</option>
+                        <option value="+352" data-flag="https://flagcdn.com/16x12/lu.png" data-code="lu">Luxembourg (+352)</option>
+                        <option value="+853" data-flag="https://flagcdn.com/16x12/mo.png" data-code="mo">Macau (+853)</option>
+                        <option value="+389" data-flag="https://flagcdn.com/16x12/mk.png" data-code="mk">Macedonia (+389)</option>
+                        <option value="+261" data-flag="https://flagcdn.com/16x12/mg.png" data-code="mg">Madagascar (+261)</option>
+                        <option value="+265" data-flag="https://flagcdn.com/16x12/mw.png" data-code="mw">Malawi (+265)</option>
+                        <option value="+60" data-flag="https://flagcdn.com/16x12/my.png" data-code="my">Malaysia (+60)</option>
+                        <option value="+960" data-flag="https://flagcdn.com/16x12/mv.png" data-code="mv">Maldives (+960)</option>
+                        <option value="+223" data-flag="https://flagcdn.com/16x12/ml.png" data-code="ml">Mali (+223)</option>
+                        <option value="+356" data-flag="https://flagcdn.com/16x12/mt.png" data-code="mt">Malta (+356)</option>
+                        <option value="+692" data-flag="https://flagcdn.com/16x12/mh.png" data-code="mh">Marshall Islands (+692)</option>
+                        <option value="+222" data-flag="https://flagcdn.com/16x12/mr.png" data-code="mr">Mauritania (+222)</option>
+                        <option value="+230" data-flag="https://flagcdn.com/16x12/mu.png" data-code="mu">Mauritius (+230)</option>
+                        <option value="+52" data-flag="https://flagcdn.com/16x12/mx.png" data-code="mx">Mexico (+52)</option>
+                        <option value="+691" data-flag="https://flagcdn.com/16x12/fm.png" data-code="fm">Micronesia (+691)</option>
+                        <option value="+373" data-flag="https://flagcdn.com/16x12/md.png" data-code="md">Moldova (+373)</option>
+                        <option value="+377" data-flag="https://flagcdn.com/16x12/mc.png" data-code="mc">Monaco (+377)</option>
+                        <option value="+976" data-flag="https://flagcdn.com/16x12/mn.png" data-code="mn">Mongolia (+976)</option>
+                        <option value="+382" data-flag="https://flagcdn.com/16x12/me.png" data-code="me">Montenegro (+382)</option>
+                        <option value="+212" data-flag="https://flagcdn.com/16x12/ma.png" data-code="ma">Morocco (+212)</option>
+                        <option value="+258" data-flag="https://flagcdn.com/16x12/mz.png" data-code="mz">Mozambique (+258)</option>
+                        <option value="+95" data-flag="https://flagcdn.com/16x12/mm.png" data-code="mm">Myanmar (+95)</option>
+                        <option value="+264" data-flag="https://flagcdn.com/16x12/na.png" data-code="na">Namibia (+264)</option>
+                        <option value="+674" data-flag="https://flagcdn.com/16x12/nr.png" data-code="nr">Nauru (+674)</option>
+                        <option value="+977" data-flag="https://flagcdn.com/16x12/np.png" data-code="np">Nepal (+977)</option>
+                        <option value="+31" data-flag="https://flagcdn.com/16x12/nl.png" data-code="nl">Netherlands (+31)</option>
+                        <option value="+687" data-flag="https://flagcdn.com/16x12/nc.png" data-code="nc">New Caledonia (+687)</option>
+                        <option value="+64" data-flag="https://flagcdn.com/16x12/nz.png" data-code="nz">New Zealand (+64)</option>
+                        <option value="+505" data-flag="https://flagcdn.com/16x12/ni.png" data-code="ni">Nicaragua (+505)</option>
+                        <option value="+227" data-flag="https://flagcdn.com/16x12/ne.png" data-code="ne">Niger (+227)</option>
+                        <option value="+234" data-flag="https://flagcdn.com/16x12/ng.png" data-code="ng">Nigeria (+234)</option>
+                        <option value="+683" data-flag="https://flagcdn.com/16x12/nu.png" data-code="nu">Niue (+683)</option>
+                        <option value="+47" data-flag="https://flagcdn.com/16x12/no.png" data-code="no">Norway (+47)</option>
+                        <option value="+968" data-flag="https://flagcdn.com/16x12/om.png" data-code="om">Oman (+968)</option>
+                        <option value="+92" data-flag="https://flagcdn.com/16x12/pk.png" data-code="pk">Pakistan (+92)</option>
+                        <option value="+680" data-flag="https://flagcdn.com/16x12/pw.png" data-code="pw">Palau (+680)</option>
+                        <option value="+970" data-flag="https://flagcdn.com/16x12/ps.png" data-code="ps">Palestine (+970)</option>
+                        <option value="+507" data-flag="https://flagcdn.com/16x12/pa.png" data-code="pa">Panama (+507)</option>
+                        <option value="+675" data-flag="https://flagcdn.com/16x12/pg.png" data-code="pg">Papua New Guinea (+675)</option>
+                        <option value="+595" data-flag="https://flagcdn.com/16x12/py.png" data-code="py">Paraguay (+595)</option>
+                        <option value="+51" data-flag="https://flagcdn.com/16x12/pe.png" data-code="pe">Peru (+51)</option>
+                        <option value="+63" data-flag="https://flagcdn.com/16x12/ph.png" data-code="ph">Philippines (+63)</option>
+                        <option value="+48" data-flag="https://flagcdn.com/16x12/pl.png" data-code="pl">Poland (+48)</option>
+                        <option value="+351" data-flag="https://flagcdn.com/16x12/pt.png" data-code="pt">Portugal (+351)</option>
+                        <option value="+974" data-flag="https://flagcdn.com/16x12/qa.png" data-code="qa">Qatar (+974)</option>
+                        <option value="+40" data-flag="https://flagcdn.com/16x12/ro.png" data-code="ro">Romania (+40)</option>
+                        <option value="+7" data-flag="https://flagcdn.com/16x12/ru.png" data-code="ru">Russia (+7)</option>
+                        <option value="+250" data-flag="https://flagcdn.com/16x12/rw.png" data-code="rw">Rwanda (+250)</option>
+                        <option value="+1-869" data-flag="https://flagcdn.com/16x12/kn.png" data-code="kn">Saint Kitts and Nevis (+1-869)</option>
+                        <option value="+1-758" data-flag="https://flagcdn.com/16x12/lc.png" data-code="lc">Saint Lucia (+1-758)</option>
+                        <option value="+1-784" data-flag="https://flagcdn.com/16x12/vc.png" data-code="vc">Saint Vincent and the Grenadines (+1-784)</option>
+                        <option value="+685" data-flag="https://flagcdn.com/16x12/ws.png" data-code="ws">Samoa (+685)</option>
+                        <option value="+378" data-flag="https://flagcdn.com/16x12/sm.png" data-code="sm">San Marino (+378)</option>
+                        <option value="+239" data-flag="https://flagcdn.com/16x12/st.png" data-code="st">Sao Tome and Principe (+239)</option>
+                        <option value="+966" data-flag="https://flagcdn.com/16x12/sa.png" data-code="sa">Saudi Arabia (+966)</option>
+                        <option value="+221" data-flag="https://flagcdn.com/16x12/sn.png" data-code="sn">Senegal (+221)</option>
+                        <option value="+381" data-flag="https://flagcdn.com/16x12/rs.png" data-code="rs">Serbia (+381)</option>
+                        <option value="+248" data-flag="https://flagcdn.com/16x12/sc.png" data-code="sc">Seychelles (+248)</option>
+                        <option value="+232" data-flag="https://flagcdn.com/16x12/sl.png" data-code="sl">Sierra Leone (+232)</option>
+                        <option value="+65" data-flag="https://flagcdn.com/16x12/sg.png" data-code="sg">Singapore (+65)</option>
+                        <option value="+421" data-flag="https://flagcdn.com/16x12/sk.png" data-code="sk">Slovakia (+421)</option>
+                        <option value="+386" data-flag="https://flagcdn.com/16x12/si.png" data-code="si">Slovenia (+386)</option>
+                        <option value="+677" data-flag="https://flagcdn.com/16x12/sb.png" data-code="sb">Solomon Islands (+677)</option>
+                        <option value="+252" data-flag="https://flagcdn.com/16x12/so.png" data-code="so">Somalia (+252)</option>
+                        <option value="+27" data-flag="https://flagcdn.com/16x12/za.png" data-code="za">South Africa (+27)</option>
+                        <option value="+82" data-flag="https://flagcdn.com/16x12/kr.png" data-code="kr">South Korea (+82)</option>
+                        <option value="+211" data-flag="https://flagcdn.com/16x12/ss.png" data-code="ss">South Sudan (+211)</option>
+                        <option value="+34" data-flag="https://flagcdn.com/16x12/es.png" data-code="es">Spain (+34)</option>
+                        <option value="+94" data-flag="https://flagcdn.com/16x12/lk.png" data-code="lk">Sri Lanka (+94)</option>
+                        <option value="+249" data-flag="https://flagcdn.com/16x12/sd.png" data-code="sd">Sudan (+249)</option>
+                        <option value="+597" data-flag="https://flagcdn.com/16x12/sr.png" data-code="sr">Suriname (+597)</option>
+                        <option value="+268" data-flag="https://flagcdn.com/16x12/sz.png" data-code="sz">Swaziland (+268)</option>
+                        <option value="+46" data-flag="https://flagcdn.com/16x12/se.png" data-code="se">Sweden (+46)</option>
+                        <option value="+41" data-flag="https://flagcdn.com/16x12/ch.png" data-code="ch">Switzerland (+41)</option>
+                        <option value="+963" data-flag="https://flagcdn.com/16x12/sy.png" data-code="sy">Syria (+963)</option>
+                        <option value="+886" data-flag="https://flagcdn.com/16x12/tw.png" data-code="tw">Taiwan (+886)</option>
+                        <option value="+992" data-flag="https://flagcdn.com/16x12/tj.png" data-code="tj">Tajikistan (+992)</option>
+                        <option value="+255" data-flag="https://flagcdn.com/16x12/tz.png" data-code="tz">Tanzania (+255)</option>
+                        <option value="+66" data-flag="https://flagcdn.com/16x12/th.png" data-code="th">Thailand (+66)</option>
+                        <option value="+228" data-flag="https://flagcdn.com/16x12/tg.png" data-code="tg">Togo (+228)</option>
+                        <option value="+676" data-flag="https://flagcdn.com/16x12/to.png" data-code="to">Tonga (+676)</option>
+                        <option value="+1-868" data-flag="https://flagcdn.com/16x12/tt.png" data-code="tt">Trinidad and Tobago (+1-868)</option>
+                        <option value="+216" data-flag="https://flagcdn.com/16x12/tn.png" data-code="tn">Tunisia (+216)</option>
+                        <option value="+90" data-flag="https://flagcdn.com/16x12/tr.png" data-code="tr">Turkey (+90)</option>
+                        <option value="+993" data-flag="https://flagcdn.com/16x12/tm.png" data-code="tm">Turkmenistan (+993)</option>
+                        <option value="+688" data-flag="https://flagcdn.com/16x12/tv.png" data-code="tv">Tuvalu (+688)</option>
+                        <option value="+256" data-flag="https://flagcdn.com/16x12/ug.png" data-code="ug">Uganda (+256)</option>
+                        <option value="+380" data-flag="https://flagcdn.com/16x12/ua.png" data-code="ua">Ukraine (+380)</option>
+                        <option value="+971" data-flag="https://flagcdn.com/16x12/ae.png" data-code="ae">United Arab Emirates (+971)</option>
+                        <option value="+44" data-flag="https://flagcdn.com/16x12/gb.png" data-code="gb">United Kingdom (+44)</option>
+                        <option value="+1" data-flag="https://flagcdn.com/16x12/us.png" data-code="us">United States (+1)</option>
+                        <option value="+598" data-flag="https://flagcdn.com/16x12/uy.png" data-code="uy">Uruguay (+598)</option>
+                        <option value="+998" data-flag="https://flagcdn.com/16x12/uz.png" data-code="uz">Uzbekistan (+998)</option>
+                        <option value="+678" data-flag="https://flagcdn.com/16x12/vu.png" data-code="vu">Vanuatu (+678)</option>
+                        <option value="+58" data-flag="https://flagcdn.com/16x12/ve.png" data-code="ve">Venezuela (+58)</option>
+                        <option value="+84" data-flag="https://flagcdn.com/16x12/vn.png" data-code="vn">Vietnam (+84)</option>
+                        <option value="+681" data-flag="https://flagcdn.com/16x12/wf.png" data-code="wf">Wallis and Futuna (+681)</option>
+                        <option value="+967" data-flag="https://flagcdn.com/16x12/ye.png" data-code="ye">Yemen (+967)</option>
+                        <option value="+260" data-flag="https://flagcdn.com/16x12/zm.png" data-code="zm">Zambia (+260)</option>
+                        <option value="+263" data-flag="https://flagcdn.com/16x12/zw.png" data-code="zw">Zimbabwe (+263)</option>
+                    </select>
+                    <span id="flagDisplay" class="flag-display">
+                        <img src="https://flagcdn.com/16x12/gh.png" alt="Ghana Flag" class="flag-img">
+                    </span>
+                </div>
+            </div>
+            <div class="example-box p-4 mb-4">
+                <p class="font-semibold">Example Format:</p>
+                <pre class="text-sm text-gray-700">
+John Doe
+0241234567
+Jane Smith
++44 7911 123456
+                </pre>
+            </div>
+            <textarea id="contactInput" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Paste your contacts here..."></textarea>
+            <button onclick="generateVCF()" class="btn-primary w-full mt-4 bg-blue-600 text-white py-3 rounded-lg font-semibold">Generate & Download Contacts (.vcf)</button>
+        </div>
+
+        <div id="output" class="output text-center text-gray-700"></div>
+
+        <footer>
+            <p class="text-gray-600">&copy; 2025 Lyfer Pro Contact Importer. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div class="chatbot-toggle" onclick="toggleChatbot()">💬</div>
+    <div class="chatbot-container" id="chatbot">
+        <div class="chatbot-header">
+            <span>Contact Helper</span>
+            <button onclick="toggleChatbot()" class="text-white">✕</button>
+        </div>
+        <div class="chatbot-body" id="chatbotBody"></div>
+        <div class="chatbot-input">
+            <input type="text" id="chatbotInput" placeholder="Ask about importing contacts...">
+            <button onclick="sendMessage()" class="ml-2 bg-blue-600 text-white px-3 py-1 rounded">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function updateFlag() {
+            const select = document.getElementById('countrySelect');
+            const flagDisplay = document.getElementById('flagDisplay');
+            const selectedOption = select.options[select.selectedIndex];
+            const flagUrl = selectedOption.getAttribute('data-flag');
+            const countryCode = selectedOption.getAttribute('data-code');
+            flagDisplay.innerHTML = `<img src="${flagUrl}" alt="${selectedOption.text} Flag" class="flag-img">`;
+        }
+
+        function generateVCF() {
+            const input = document.getElementById('contactInput').value.trim();
+            const countryCode = document.getElementById('countrySelect').value;
+            const output = document.getElementById('output');
+            const contactInput = document.getElementById('contactInput');
+
+            if (!input) {
+                output.innerHTML = '<p class="text-red-500">Please paste some contacts first!</p>';
+                return;
+            }
+
+            const lines = input.split('\n').map(line => line.trim()).filter(line => line);
+            const contacts = [];
+            const phoneRegex = /^[0-9+\-\(\). ]+$/;
+            let correctedInput = [];
+
+            // Process lines to pair name and phone number, auto-correcting
+            for (let i = 0; i < lines.length; i += 2) {
+                let name = lines[i];
+                let phone = lines[i + 1] || '';
+
+                // If no phone number (odd lines or empty), skip or use placeholder
+                if (!phone || !name) {
+                    if (name && !phone) {
+                        phone = '0000000000'; // Placeholder, will be flagged as invalid
+                    } else {
+                        continue; // Skip invalid pairs
+                    }
+                }
+
+                // Validate and correct phone number
+                if (!phoneRegex.test(phone)) {
+                    // Try to extract digits and reformat
+                    const digits = phone.replace(/[^0-9]/g, '');
+                    if (digits.length >= 7) {
+                        phone = digits; // Use digits if enough for a valid number
+                    } else {
+                        phone = '0000000000'; // Placeholder for invalid
+                    }
+                }
+
+                // Format phone number with country code
+                if (countryCode === '+233' && phone.startsWith('0')) {
+                    phone = '+233' + phone.substring(1).replace(/[^0-9]/g, '');
+                } else if (!phone.startsWith('+')) {
+                    phone = countryCode + phone.replace(/[^0-9]/g, '');
+                }
+
+                // Validate final phone number
+                if (!phoneRegex.test(phone)) {
+                    output.innerHTML = `<p class="text-red-500">Could not correct phone number for "${name}". It must include digits, +, -, (), ., or spaces. Review the corrected input and try again.</p>`;
+                    return;
+                }
+
+                contacts.push({ name, phone });
+                correctedInput.push(name, phone);
+            }
+
+            if (contacts.length === 0) {
+                output.innerHTML = '<p class="text-red-500">No valid contacts found. Check your input and try again.</p>';
+                return;
+            }
+
+            if (contacts.length > 100) {
+                output.innerHTML = '<p class="text-red-500">Too many contacts. Please use up to 100 contacts (200 lines) at a time.</p>';
+                return;
+            }
+
+            // Update textarea with corrected input
+            contactInput.value = correctedInput.join('\n');
+            output.innerHTML = `<p class="text-blue-600">Input corrected! ${contacts.length} contacts ready. Review the textarea and click to generate.</p>`;
+
+            // Generate .vcf file
+            let vcfContent = '';
+            contacts.forEach(contact => {
+                vcfContent += `BEGIN:VCARD
+VERSION:3.0
+FN:${contact.name}
+TEL:${contact.phone}
+END:VCARD
+`;
+            });
+
+            const blob = new Blob([vcfContent], { type: 'text/vcard' });
+            const url = URL.createObjectURL(blob);
+
+            if (navigator.share && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                navigator.share({
+                    files: [new File([blob], 'contacts.vcf', { type: 'text/vcard' })],
+                    title: 'Lyfer Pro Contacts',
+                    text: 'Import these contacts to your phone.'
+                }).then(() => {
+                    output.innerHTML = `<p class="text-green-600">Success! Shared <strong>contacts.vcf</strong> with ${contacts.length} contacts. Tap the file in your Downloads or Files app to import them to your Contacts.</p>`;
+                }).catch(err => {
+                    console.error('Share failed:', err);
+                    triggerDownload(url, contacts.length, output);
+                });
+            } else {
+                triggerDownload(url, contacts.length, output);
+            }
+        }
+
+        function triggerDownload(url, contactCount, output) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'contacts.vcf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            output.innerHTML = `<p class="text-green-600">Success! Downloaded <strong>contacts.vcf</strong> with ${contactCount} contacts. Open the file in your phone's Contacts app or Files app to import them all at once.</p>`;
+        }
+
+        function toggleChatbot() {
+            const chatbot = document.getElementById('chatbot');
+            chatbot.style.display = chatbot.style.display === 'none' || !chatbot.style.display ? 'flex' : 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatbotInput');
+            const body = document.getElementById('chatbotBody');
+            const message = input.value.trim().toLowerCase();
+            if (!message) return;
+
+            const userMessage = document.createElement('div');
+            userMessage.className = 'chat-message user-message';
+            userMessage.textContent = message;
+            body.appendChild(userMessage);
+
+            let response = 'Sorry, I didn’t understand that. Try asking about contact importing!';
+            if (message.includes('how') && message.includes('import')) {
+                response = 'Select a country to show its flag, then paste up to 100 contacts (name on one line, phone number on the next). Invalid formats are auto-corrected in the textarea. Click the button to download or share a .vcf file, then tap it to import.';
+            } else if (message.includes('format')) {
+                response = 'Use this format: Name on one line, phone number on the next. Example:\nJohn Doe\n0241234567\nJane Smith\n+447911123456. Invalid inputs are auto-corrected in the textarea.';
+            } else if (message.includes('how many') || message.includes('limit')) {
+                response = 'Paste up to 100 contacts at a time (200 lines). Repeat to import up to 1000 contacts total.';
+            } else if (message.includes('iphone') || message.includes('android')) {
+                response = 'After downloading or sharing the .vcf file, open it on your iPhone via the Files app or on Android via a file manager or Downloads. Tap the file to import the contacts.';
+            } else if (message.includes('phone') && message.includes('format')) {
+                response = 'Phone numbers can include digits, +, -, (), ., or spaces. Examples: 0241234567, +447911123456. For Ghana, numbers starting with 0 (e.g., 0241234567) will use +233 if Ghana is selected. Invalid numbers are auto-corrected.';
+            } else if (message.includes('country') || message.includes('code')) {
+                response = 'Select a country from the dropdown to show its flag and add its code (e.g., +233 for Ghana) to phone numbers without one. For Ghana, numbers starting with 0 will use +233. Numbers with + are used as is.';
+            } else if (message.includes('flag')) {
+                response = 'The flag of the selected country appears next to the dropdown as an image for reliable display across devices. Each country in the list has a flag image.';
+            } else if (message.includes('correct') || message.includes('auto')) {
+                response = 'If your input has errors (e.g., odd lines, invalid phone numbers), it’s auto-corrected in the textarea. Empty lines are removed, and phone numbers are formatted with the selected country code. Review the corrected input before generating.';
+            }
+
+            const botMessage = document.createElement('div');
+            botMessage.className = 'chat-message bot-message';
+            botMessage.textContent = response;
+            body.appendChild(botMessage);
+
+            body.scrollTop = body.scrollHeight;
+            input.value = '';
+        }
+
+        document.getElementById('chatbotInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Initialize flag display
+        window.onload = updateFlag;
+    </script>
+</body>
+</html>
